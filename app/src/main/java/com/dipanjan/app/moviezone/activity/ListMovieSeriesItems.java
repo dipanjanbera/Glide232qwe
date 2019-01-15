@@ -32,6 +32,7 @@ import com.dipanjan.app.moviezone.app.AppController;
 import com.dipanjan.app.moviezone.bo.MovieDetailsBO;
 import com.dipanjan.app.moviezone.helper.Helper;
 import com.dipanjan.app.moviezone.helper.NetworkCheck;
+import com.dipanjan.app.moviezone.helper.SortMovieSeries;
 import com.dipanjan.app.moviezone.model.Movie;
 import com.dipanjan.app.moviezone.model.MovieSeries;
 import com.dipanjan.app.moviezone.util.Constant;
@@ -42,6 +43,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import info.dipanjan.app.R;
 
@@ -306,6 +309,8 @@ public class ListMovieSeriesItems extends AppCompatActivity
             populateMovieObject(response);
         }
 
+        Collections.sort(movies,new SortMovieSeries());
+
         displayFetchedMovieItemAsList();
     }
 
@@ -336,6 +341,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
                         movie.setYear(obj.getString("year"));
                         movie.setRuntime(obj.getString("runtime"));
                         movie.setId(obj.getString("id"));
+                        movie.setImdbCode(obj.getString(Constant.TagConstant.IMBD_CODE));
                         if(obj.has(Constant.TagConstant.GENRES)){
                             JSONArray genreJsonArray = obj.getJSONArray(Constant.TagConstant.GENRES);
                             for(int index=0;index<genreJsonArray.length();index++){
@@ -350,6 +356,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
                             }
                             movie.setGenres(constructGenreString);
                             constructGenreString=null;
+                            movie.setMovieSeries(true);
                         }
 
                         movies.add(movie);

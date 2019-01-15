@@ -57,6 +57,7 @@ import com.dipanjan.app.moviezone.helper.NetworkCheck;
 import com.dipanjan.app.moviezone.model.Cast;
 import com.dipanjan.app.moviezone.model.Movie;
 import com.dipanjan.app.moviezone.model.Torrent;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -220,6 +221,7 @@ public class MovieDeatils extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (IMDB_CODE_MOVIE != null) {
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_VIEW_TUTORIAL_CLICK, AnalyticsTAGs.Events.EVENT_VIEW_TUTORIAL_CLICK);
                     new FinestWebView.Builder(getApplicationContext()).theme(R.style.FinestWebViewTheme)
                             .titleDefault("Loading..")
                             .toolbarScrollFlags(0)
@@ -249,6 +251,7 @@ public class MovieDeatils extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (IMDB_CODE_MOVIE != null) {
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK,AnalyticsTAGs.Events.EVENT_VIEW_MOVIE_IMDB,AnalyticsTAGs.Events.EVENT_VIEW_MOVIE_IMDB);
                     new FinestWebView.Builder(getApplicationContext()).theme(R.style.FinestWebViewTheme)
                             .titleDefault("Loading..")
                             .toolbarScrollFlags(0)
@@ -278,6 +281,7 @@ public class MovieDeatils extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(movieTrailerCode!=null){
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_WATCH_TRAILER, AnalyticsTAGs.Events.EVENT_WATCH_TRAILER);
                     //Toast.makeText(getApplicationContext(),"come here "+movieTrailerCode,Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(getApplicationContext(),YoutubeVideoPlayer.class);
                     intent.putExtra("VIDEOID", movieTrailerCode);
@@ -300,7 +304,9 @@ public class MovieDeatils extends AppCompatActivity {
                 if(checked){
                     boolean flag=setMovieAsLikedMovie();
                     if(flag){
+                        AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_LIKE_MOVIE, AnalyticsTAGs.Events.EVENT_LIKE_MOVIE);
                         shineButton.setBtnColor(Color.RED);
+
                     }else{
                         Toast.makeText(getApplicationContext(),"Error while setting movie as liked",Toast.LENGTH_SHORT).show();
                     }
@@ -308,6 +314,7 @@ public class MovieDeatils extends AppCompatActivity {
                 }else{
                     boolean flag=removeMovieFromLikedMovie();
                     if(flag){
+                        AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_DISLIKE_MOVIE, AnalyticsTAGs.Events.EVENT_DISLIKE_MOVIE);
                         shineButton.setBtnColor(Color.GRAY);
                     }else{
                         shineButton.setBtnColor(Color.RED);
@@ -554,6 +561,7 @@ public class MovieDeatils extends AppCompatActivity {
 
                             .show("http://www.yifysubtitles.com/movie-imdb/" + movie.getImdbCode());*/
 
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_DOWNLOAD_SUBTITLE, AnalyticsTAGs.Events.EVENT_DOWNLOAD_SUBTITLE);
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constant.SUBTITLE_URL+movie.getImdbCode()));
                     browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getApplicationContext().startActivity(browserIntent);
@@ -567,6 +575,7 @@ public class MovieDeatils extends AppCompatActivity {
             shineButton.setBtnFillColor(Color.RED);
             shineButton.setChecked(true);
         }
+
     }
 
 

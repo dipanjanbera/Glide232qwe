@@ -7,15 +7,27 @@
     <item
         android:id="@+id/fav"
         android:orderInCategory="300"
-        android:title="User"
+        android:title="fav"
         android:icon="@drawable/baseline_favorite_white_18dp"
         app:showAsAction="ifRoom"></item>
 
     <item
         android:id="@+id/search_movies"
         android:orderInCategory="300"
-        android:title="User"
+        android:title="search movies"
         android:icon="@drawable/twotone_search_white_18dp"
         app:showAsAction="ifRoom"></item>
+
+    <item
+        android:id="@+id/rate"
+        android:orderInCategory="300"
+        android:title="Rate the app"
+        app:showAsAction="never"></item>
+
+    <item
+        android:id="@+id/disclaimer"
+        android:orderInCategory="300"
+        android:title="Disclaimer"
+        app:showAsAction="never"></item>
 
 </menu>

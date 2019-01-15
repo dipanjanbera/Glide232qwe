@@ -61,9 +61,16 @@ dependencies {
 
     compile 'com.sackcentury:shinebutton:0.2.0'
 
+    implementation 'com.google.firebase:firebase-core:16.0.1'
+
+    compile 'com.google.android.gms:play-services-analytics:16.0.1'
+
+    implementation 'com.google.firebase:firebase-config:16.0.0'
+
 
 
 }
+apply plugin: 'com.google.gms.google-services'
 repositories {
     mavenCentral()
 }

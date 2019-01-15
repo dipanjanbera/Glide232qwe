@@ -126,8 +126,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
 
                 holder.title.setText(movie.getTitle());
                 holder.title.setTag(movie.getId());
+                String text = null;
+                if(movie.isMovieSeries()){
+                     text = movie.getRating()+"  -  Part : "+(position+1) +"  -  "+movie.getYear();
+                }else{
+                     text = movie.getRating()+"  |  "+movie.getYear()+"  |  "+movie.getRuntime()+" min";
+                }
 
-                String text = movie.getRating()+"  |  "+movie.getYear()+"  |  "+movie.getRuntime()+" min";
                 holder.details.setText(" "+text);
                 holder.genre.setText(movie.getGenres());
 

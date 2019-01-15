@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:background="@color/colorPrimaryDark"
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:layout_gravity="center">
+
+        <ImageView
+
+            android:id="@+id/imageView10"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="120dp"
+            app:srcCompat="@mipmap/ic_launcher" />
+
+        <TextView
+            android:id="@+id/textView18"
+            style="@style/CodeFont_Movie_Details_Headers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView10"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="14dp"
+            android:text="Notice of Non-Affiliation and Disclaimer" />
+
+        <TextView
+            android:id="@+id/textView19"
+
+            style="@style/CodeFont_Movie_Title_Headers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/textView18"
+            android:layout_alignLeft="@+id/textView18"
+            android:layout_alignRight="@+id/textView18"
+            android:layout_alignStart="@+id/textView18"
+            android:layout_below="@+id/textView18"
+            android:layout_marginTop="29dp"
+            android:paddingLeft="30dp"
+            android:text="The app Movie Zone does not host or store any copyrighted contents on its server and in application and all links present in app are hosted by external entities. This App uses YTS API(https://yts.am/api), a Restful Web API,which exchange data in JSON format, hosted on public domain and and we are not affiliated, associated, endorsed by or in any way officially connected with them.The app only uses this API service to display movies and its detailed information in organised way by providing an user interface." />
+    </RelativeLayout>
+</LinearLayout>

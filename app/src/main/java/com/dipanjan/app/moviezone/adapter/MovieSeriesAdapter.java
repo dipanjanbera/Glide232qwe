@@ -86,7 +86,7 @@ public class MovieSeriesAdapter extends RecyclerView.Adapter<MovieSeriesAdapter.
         holder.progressBar.setIndeterminateDrawable(threeBounce);
 
         RequestOptions myOptions = new RequestOptions()
-                .diskCacheStrategy(DiskCacheStrategy.NONE);
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC);
 
         Glide.with(mContext).load(singlemovieSeries.getMoviePoster())
                 .transition(withCrossFade(700))

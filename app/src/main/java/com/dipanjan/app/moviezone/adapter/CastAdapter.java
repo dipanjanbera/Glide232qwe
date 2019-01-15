@@ -12,7 +12,9 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.dipanjan.app.moviezone.app.AppController;
 import com.dipanjan.app.moviezone.model.Cast;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.thefinestartist.finestwebview.FinestWebView;
 
 import java.util.List;
@@ -76,6 +78,7 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.MyViewHolder> 
             @Override
             public void onClick(View view) {
                     if(cast.getImdbCode()!=null){
+                        AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_ACTOR_IMDB_PROFILE, AnalyticsTAGs.Events.EVENT_ACTOR_IMDB_PROFILE);
                         new FinestWebView.Builder(context).theme(R.style.FinestWebViewTheme)
                                 .titleDefault("Loading..")
                                 .toolbarScrollFlags(0)

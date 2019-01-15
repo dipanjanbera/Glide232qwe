@@ -1,5 +1,7 @@
 package com.dipanjan.app.moviezone.model;
 
+import java.util.ArrayList;
+
 /**
  * Created by LENOVO on 31-08-2018.
  */
@@ -12,7 +14,17 @@ public class DataModel {
     private String identifier;
     private String queryParameter;
     private String header;
-    public DataModel(String urlLink, String category, String identifier,String queryParameter,String header) {
+    private ArrayList<MovieSeries> movieSeriesArrayList;
+
+    public ArrayList<MovieSeries> getMovieSeriesArrayList() {
+        return movieSeriesArrayList;
+    }
+
+    public void setMovieSeriesArrayList(ArrayList<MovieSeries> movieSeriesArrayList) {
+        this.movieSeriesArrayList = movieSeriesArrayList;
+    }
+
+    public DataModel(String urlLink, String category, String identifier, String queryParameter, String header) {
         super();
         this.urlLink = urlLink;
         this.category = category;

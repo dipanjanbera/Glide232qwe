@@ -26,7 +26,24 @@ public class Movie {
 	private String mediumCoverImage;
 	private String largeCoverImage;
 	private boolean isLikedMovie;
+	private MovieSeries movieSeries;
+	private boolean isMovieSeries;
 
+	public boolean isMovieSeries() {
+		return isMovieSeries;
+	}
+
+	public void setMovieSeries(boolean movieSeries) {
+		isMovieSeries = movieSeries;
+	}
+
+	public MovieSeries getMovieSeries() {
+		return movieSeries;
+	}
+
+	public void setMovieSeries(MovieSeries movieSeries) {
+		this.movieSeries = movieSeries;
+	}
 
 	public boolean isLikedMovie() {
 		return isLikedMovie;

@@ -18,8 +18,10 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.dipanjan.app.moviezone.app.AppController;
 import com.dipanjan.app.moviezone.helper.Helper;
 import com.dipanjan.app.moviezone.model.Torrent;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.dipanjan.app.moviezone.util.Constant;
 
 import java.io.UnsupportedEncodingException;
@@ -102,6 +104,7 @@ public class DownloadMovieAdapter extends RecyclerView.Adapter<DownloadMovieAdap
             holder.downloadLink.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_DOWNLOAD_TORRENT, AnalyticsTAGs.Events.EVENT_DOWNLOAD_TORRENT);
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(torrent.getUrl()));
                     browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(browserIntent);
@@ -141,10 +144,11 @@ public class DownloadMovieAdapter extends RecyclerView.Adapter<DownloadMovieAdap
             if (infos.size() > 0) {
                 c.startActivity(browserIntent);
                 Log.e("TAG","yes act to handle");
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_BUTTON_CLICK, AnalyticsTAGs.Events.EVENT_MAGNET_TORRENT_LINK_CLICK, AnalyticsTAGs.Events.EVENT_MAGNET_TORRENT_LINK_CLICK);
             } else {
                 //Toast.makeText(c,"No Torrent client found to perform this task",Toast.LENGTH_SHORT).show();
                 displayAlert(coordinatorLayout,"No Torrent client found", Constant.SNACKBAR_DISPALY_MODE_FAILURE,"Download >",Constant.SNACKBAR_DISPALY_MODE_LONG,true);
-
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SNACKBAR_CLICK, AnalyticsTAGs.Events.EVENT_SNACKBAR_DISPLAY_NO_TORRENT_CLIENT, AnalyticsTAGs.Events.EVENT_SNACKBAR_DISPLAY_NO_TORRENT_CLIENT);
 
             }
         }else{
@@ -180,6 +184,7 @@ public class DownloadMovieAdapter extends RecyclerView.Adapter<DownloadMovieAdap
             snackBar.setAction(actionText, new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SNACKBAR_CLICK, AnalyticsTAGs.Events.EVENT_DOWNLOAD_TORRENT_CLIENT_CLICK, AnalyticsTAGs.Events.EVENT_DOWNLOAD_TORRENT_CLIENT_CLICK);
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setData(Uri.parse(

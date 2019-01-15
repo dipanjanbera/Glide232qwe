@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -30,8 +31,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.dipanjan.app.moviezone.adapter.RecyclerViewDataAdapter;
+import com.dipanjan.app.moviezone.bo.MovieDetailsBO;
 import com.dipanjan.app.moviezone.helper.NetworkCheck;
 import com.dipanjan.app.moviezone.model.Movie;
+import com.dipanjan.app.moviezone.model.MovieSeries;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 
 import org.json.JSONArray;
@@ -40,8 +44,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
+import info.dipanjan.app.BuildConfig;
 import info.dipanjan.app.R;
 
 import com.dipanjan.app.moviezone.app.AppController;
@@ -49,6 +55,10 @@ import com.dipanjan.app.moviezone.helper.Helper;
 import com.dipanjan.app.moviezone.model.DataModel;
 import com.dipanjan.app.moviezone.model.SectionDataModel;
 import com.dipanjan.app.moviezone.util.Constant;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private RelativeLayout relativeLayout,relativeLayoutForMessageText;
     private CoordinatorLayout coordinatorLayout;
     private TextView messageText;
-
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
+    ArrayList<MovieSeries> movieSeries=null;
     public MainActivity() {
         dataModelArrayList = new ArrayList<DataModel>();
     }
@@ -225,6 +236,26 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        if (id == R.id.disclaimer) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER);
+            Intent intent = new Intent(getApplicationContext(),Disclaimer.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getApplicationContext().startActivity(intent);
+            return true;
+
+        }
+
+        if (id == R.id.rate) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_RATE_THE_APP, AnalyticsTAGs.Events.EVENT_RATE_THE_APP);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse(
+                    "https://play.google.com/store/apps/details?id=com.dipanjan.app.moviezone"));
+            startActivity(intent);
+            return true;
+
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -262,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
         synchronized (lock) {
             flag++;
 
-            if (flag == Constant.IDENTIFIER_LIST.length+1) {
+            if (flag == Constant.IDENTIFIER_LIST.length+2) {
 
                 displayFetchedMovieItemAsList();
             }
@@ -277,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
                 fetchMovieData(dataModel);
             }
         }
-
+        getFirebaseRemoteConfigJSONDataForMovieSeries();
         populateMovieGerne(URLIndexPos);
 
     }
@@ -308,6 +339,73 @@ public class MainActivity extends AppCompatActivity {
         makeCount();
     }
 
+    private void populateMovieSeries(){
+        DataModel  dataModel = new DataModel();
+        SectionDataModel sectionDataModel = new SectionDataModel();
+        sectionDataModel.setHeaderTitle(Constant.Header.MOVIE_SERIES);
+        sectionDataModel.setMovieIdentifier(Constant.MovieCategory.MOVIE_SERIES);
+        dataModel.setSectionDataModel(sectionDataModel);
+        ArrayList<Movie> movieSeriesListForGridDisplay = new ArrayList<Movie>();
+        for(MovieSeries movieSeries:movieSeries){
+            if(movieSeries!=null){
+                if(movieSeriesListForGridDisplay.size()!=Constant.MAX_ITEM_EACH_ROW){
+                    Movie movie = new Movie();
+                    movie.setTitle(movieSeries.getMovieSeriesTitle());
+                    movie.setId(movieSeries.getMovieSeriesTitle());
+                    movie.setMovieSeries(movieSeries);
+                    movie.setMediumCoverImage(movieSeries.getMoviePoster());
+                    movie.setCategoryDescriptorTab(true);
+                    movie.setMovieSeries(true);
+                    movieSeriesListForGridDisplay.add(movie);
+                }else{
+                    break;
+                }
+            }
+        }
+        dataModel.getSectionDataModel().setAllItemsInSection(movieSeriesListForGridDisplay);
+        dataModel.setMovieSeriesArrayList(movieSeries);
+        dataModelArrayList.add(0,dataModel);
+    }
+
+    public void getFirebaseRemoteConfigJSONDataForMovieSeries(){
+
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        HashMap<String, Object> firebaseDefaultMap;
+        firebaseDefaultMap = new HashMap<>();
+        firebaseDefaultMap.put(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON, "");
+        mFirebaseRemoteConfig.setDefaults(firebaseDefaultMap);
+        mFirebaseRemoteConfig.setConfigSettings(
+                new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG)
+                        .build());
+        mFirebaseRemoteConfig.fetch(0).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    mFirebaseRemoteConfig.activateFetched();
+                    Log.d("Fetched Url", "Fetched value: " + mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON));
+
+                    loadMovieSeriesContents(URLIndexPosition, new DataFetchListener() {
+                        @Override
+                        public void onDataFetchSuccessfull() {
+                            populateMovieSeries();
+                            makeCount();
+                        }
+                    });
+
+                }else
+                    Toast.makeText(MainActivity.this,"Someting went wrong please try again",Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+    }
+
+    private  void loadMovieSeriesContents(int URLIndexPosition,DataFetchListener dataFetchListener){
+        movieSeries = MovieDetailsBO.loadMovieSeriesContents(mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON),URLIndexPosition);
+        if(movieSeries!=null && movieSeries.size()>0){
+            dataFetchListener.onDataFetchSuccessfull();
+        }
+    }
 
     public ArrayList<Movie> populateMovieList(String stg, ArrayList<Movie> movies, DataFetchListener dataFetchListener) {
         try {
@@ -404,6 +502,7 @@ public class MainActivity extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(strReq);
         return 1;
     }
+
 
     DialogFragment dialogFragment;
 

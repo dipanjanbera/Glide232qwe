@@ -5,20 +5,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 import info.dipanjan.app.R;
 import com.dipanjan.app.moviezone.activity.ListMovieItem;
+import com.dipanjan.app.moviezone.activity.ListMovieSeriesTitles;
 import com.dipanjan.app.moviezone.activity.MovieGerneListLayout;
 import com.dipanjan.app.moviezone.model.DataModel;
 import com.dipanjan.app.moviezone.model.Movie;
+import com.dipanjan.app.moviezone.model.MovieSeries;
 import com.dipanjan.app.moviezone.util.Constant;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class RecyclerViewDataAdapter extends RecyclerView.Adapter<RecyclerViewDataAdapter.ItemRowHolder> {
 
@@ -45,7 +52,7 @@ public class RecyclerViewDataAdapter extends RecyclerView.Adapter<RecyclerViewDa
 
         final String sectionName = dataList.get(i).getSectionDataModel().getHeaderTitle();
         final String movieIdentifier = dataList.get(i).getSectionDataModel().getMovieIdentifier();
-
+        final ArrayList<MovieSeries> movieSeriesArrayList= dataList.get(i).getMovieSeriesArrayList();
         movieList = new ArrayList<Movie>();
 
         ArrayList<Movie> singleSectionItems = dataList.get(i).getSectionDataModel().getAllItemsInSection();
@@ -100,7 +107,17 @@ public class RecyclerViewDataAdapter extends RecyclerView.Adapter<RecyclerViewDa
 
                     Intent intent = new Intent(v.getContext(), MovieGerneListLayout.class);
                     v.getContext().startActivity(intent);
-                } else {
+                }
+                else  if (movieIdentifier != null && movieIdentifier.equals(Constant.MovieCategory.MOVIE_SERIES)) {
+
+                    Intent intent = new Intent(v.getContext(), ListMovieSeriesTitles.class);
+                    Gson gson = new Gson();
+                    String json = gson.toJson(movieSeriesArrayList);
+                    intent.putExtra("MOVIE_SERIES_JSON",json);
+                    Log.d("@@@@@@@",json);
+                    v.getContext().startActivity(intent);
+                }
+                else{
 
                     Intent intent = new Intent(v.getContext(), ListMovieItem.class);
                     intent.putExtra("CATEGORY", movieIdentifier);

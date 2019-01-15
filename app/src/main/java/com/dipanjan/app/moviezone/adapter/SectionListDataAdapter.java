@@ -26,6 +26,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+import com.dipanjan.app.moviezone.activity.ListMovieSeriesItems;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 
 import java.util.ArrayList;
@@ -69,12 +70,17 @@ public class SectionListDataAdapter extends RecyclerView.Adapter<SectionListData
         holder.relativeLayoutForGenre.setVisibility(View.GONE);
 
 
-
+        RequestOptions myOptions;
         if(movie.getMediumCoverImage()!=null){
             Log.d("@@@@@@@@@@@@",movie.getMediumCoverImage());
            // holder.grenreTextView.setVisibility(View.GONE);
-            RequestOptions myOptions = new RequestOptions()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE).centerCrop();
+            if(movie.isMovieSeries()){
+                myOptions = new RequestOptions()
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).centerCrop();
+            }else{
+                myOptions = new RequestOptions()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE).centerCrop();
+            }
                 Glide.with(mContext)
                     .load(movie.getMediumCoverImage())
                     .transition(withCrossFade(700))
@@ -121,6 +127,25 @@ public class SectionListDataAdapter extends RecyclerView.Adapter<SectionListData
 
         }
 
+        holder.itemImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(movie.isMovieSeries()){
+                    Intent intent = new Intent(mContext,ListMovieSeriesItems.class);
+                    intent.putExtra("MOVIESERIES", movie.getMovieSeries());
+                    intent.putExtra("URLIndexPosition", URLIndexPosition);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                }else{
+                    Intent intent = new Intent(mContext,MovieDeatils.class);
+                    intent.putExtra("MOVIEID", (String)movie.getId());
+                    intent.putExtra("URLIndexPosition", URLIndexPosition);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                }
+            }
+        });
+
 
 
     }
@@ -153,23 +178,15 @@ public class SectionListDataAdapter extends RecyclerView.Adapter<SectionListData
             this.grenreTextView = (TextView) view.findViewById(R.id.genreText);
 
 
-
+/*
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
 
-
-
-                    Intent intent = new Intent(mContext,MovieDeatils.class);
-                    intent.putExtra("MOVIEID", (String)tvTitle.getTag());
-                    intent.putExtra("URLIndexPosition", URLIndexPosition);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivity(intent);
-
                 }
             });
-
+*/
 
         }
 
