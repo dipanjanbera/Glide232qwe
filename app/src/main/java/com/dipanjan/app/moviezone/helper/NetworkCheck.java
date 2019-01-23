@@ -1,9 +1,6 @@
 package com.dipanjan.app.moviezone.helper;
 
 import android.os.AsyncTask;
-import android.widget.Toast;
-
-import com.dipanjan.app.moviezone.util.Constant;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -19,26 +16,23 @@ public class NetworkCheck extends AsyncTask<String, Void, Integer> {
     public static Integer TIMEOUT_DURATION = 10000;
     public static String DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE = "Host is not responding";
     public static String DISPLAY_MSG_IF_HOST_NOT_RESOLVE = "Host(yts.am) is not responding.\nMay be it is down now or blocked in your country.\nYou may use VPN to connect with host.";
+    private String[] hostArr;
+
     public interface AsyncResponse {
         Integer processFinish(Integer urlIndexPos);
     }
 
-    public NetworkCheck(AsyncResponse delegate){
+    public AsyncResponse delegate = null;
+    public NetworkCheck(String[] host,AsyncResponse delegate){
         this.delegate = delegate;
+        this.hostArr=host;
     }
 
-    public AsyncResponse delegate = null;
+
 
     protected Integer doInBackground(String... params) {
         Integer indexPosition =-1;
-        for (int index = 0; index < Constant.BASE_URL.length; index++) {
-            boolean pingResult = pingURL(Constant.BASE_URL[index], TIMEOUT_DURATION);
-            if (pingResult) {
-                indexPosition = index;
-                break;
-            }
-
-        }
+        indexPosition=processPingURL(this.hostArr);
         return indexPosition;
     }
 
@@ -48,6 +42,16 @@ public class NetworkCheck extends AsyncTask<String, Void, Integer> {
     }
 
 
+    public int processPingURL(String[] hostArr){
+        for (int index = 0; index < hostArr.length; index++) {
+            boolean pingResult = pingURL(hostArr[index], TIMEOUT_DURATION);
+            if (pingResult) {
+                return index;
+            }
+
+        }
+        return -1;
+    }
 
     public static boolean pingURL(String url, int timeout) {
         url = url.replaceFirst("^https", "http"); // Otherwise an exception may be thrown on invalid SSL certificates.
@@ -64,6 +68,10 @@ public class NetworkCheck extends AsyncTask<String, Void, Integer> {
         }
 
     }
+
+
+
+
 
 
 }

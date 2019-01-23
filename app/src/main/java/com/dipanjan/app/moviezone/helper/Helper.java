@@ -1,11 +1,20 @@
 package com.dipanjan.app.moviezone.helper;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import com.dipanjan.app.moviezone.bo.MovieDetailsBO;
+import com.dipanjan.app.moviezone.listener.DataFetchListener;
 import com.dipanjan.app.moviezone.util.Constant;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+
+import info.dipanjan.app.BuildConfig;
 
 /**
  * Created by LENOVO on 09-06-2018.
@@ -94,13 +103,65 @@ public class Helper {
 
 
 
-    public static String generateURL(Integer urlIndexPos,String URL){
+    public static String generateURL(Integer urlIndexPos,String URL,String[] hostList){
         if(urlIndexPos>-1){
-            return Constant.BASE_URL[urlIndexPos]+URL;
+            if(hostList!=null && hostList.length>0){
+                return hostList[urlIndexPos]+URL;
+            }else{
+                return Constant.BASE_URL[urlIndexPos]+URL;
+            }
+
         }
         return null;
     }
+    private static FirebaseRemoteConfig mFirebaseRemoteConfig;
 
+    static String[] hostList = null;
+    public static String[] getHostList(){
+
+        getFirebaseRemoteConfigJSONDataForHost();
+        if(hostList!=null && hostList.length>0){
+            return hostList;
+        }else{
+            return Constant.BASE_URL;
+        }
+
+    }
+
+    public static void getFirebaseRemoteConfigJSONDataForHost(){
+
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        mFirebaseRemoteConfig.setConfigSettings(
+                new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG)
+                        .build());
+        mFirebaseRemoteConfig.fetch(0).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    mFirebaseRemoteConfig.activateFetched();
+                    Log.d("Fetched Url", "Fetched value: " + mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_HOST_LIST));
+
+                    MovieDetailsBO.getHostList(mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_HOST_LIST), new DataFetchListener() {
+                        @Override
+                        public void onResultFetchedSuccessful(String[] hostArr) {
+
+                            hostList=hostArr;
+                        }
+
+                        @Override
+                        public void onResultFetchError() {
+                            hostList=null;
+                        }
+                    });
+
+
+                }
+
+            }
+        });
+
+
+    }
 
 
 }

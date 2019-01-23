@@ -27,6 +27,8 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.dipanjan.app.moviezone.activity.ListMovieSeriesItems;
+import com.dipanjan.app.moviezone.app.AppController;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 
 import java.util.ArrayList;
@@ -131,12 +133,15 @@ public class SectionListDataAdapter extends RecyclerView.Adapter<SectionListData
             @Override
             public void onClick(View view) {
                 if(movie.isMovieSeries()){
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MOVIE_SERIES__CLICK, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE_SERIES, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE_SERIES);
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MOVIE_SERIES_NAME, ""+movie.getMovieSeries().getMovieSeriesTitle(), AnalyticsTAGs.Events.EVENT_OPEN_MOVIE);
                     Intent intent = new Intent(mContext,ListMovieSeriesItems.class);
                     intent.putExtra("MOVIESERIES", movie.getMovieSeries());
                     intent.putExtra("URLIndexPosition", URLIndexPosition);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     mContext.startActivity(intent);
                 }else{
+                    AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MOVIE_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE);
                     Intent intent = new Intent(mContext,MovieDeatils.class);
                     intent.putExtra("MOVIEID", (String)movie.getId());
                     intent.putExtra("URLIndexPosition", URLIndexPosition);

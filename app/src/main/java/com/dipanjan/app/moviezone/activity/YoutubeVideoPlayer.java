@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.dipanjan.app.moviezone.app.AppController;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;

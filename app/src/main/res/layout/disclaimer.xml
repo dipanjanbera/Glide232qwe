@@ -45,6 +45,6 @@
             android:layout_below="@+id/textView18"
             android:layout_marginTop="29dp"
             android:paddingLeft="30dp"
-            android:text="The app Movie Zone does not host or store any copyrighted contents on its server and in application and all links present in app are hosted by external entities. This App uses YTS API(https://yts.am/api), a Restful Web API,which exchange data in JSON format, hosted on public domain and and we are not affiliated, associated, endorsed by or in any way officially connected with them.The app only uses this API service to display movies and its detailed information in organised way by providing an user interface." />
+            android:text="The app Movie Zone does not host or store any copyrighted contents on its server and in application and all links present in app are hosted by external entities. This App uses YTS API(https://yts.am/api), a Restful Web API,which exchange data in JSON format, hosted on public domain and we are not affiliated, associated, endorsed by or in any way officially connected with them.The app only uses this API service to display movies and its detailed information in organised way by providing an user interface." />
     </RelativeLayout>
 </LinearLayout>

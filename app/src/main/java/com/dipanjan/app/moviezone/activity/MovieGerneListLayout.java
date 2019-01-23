@@ -13,6 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.dipanjan.app.moviezone.adapter.MovieGerneListAdapter;
+import com.dipanjan.app.moviezone.app.AppController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,7 +66,6 @@ public class MovieGerneListLayout extends AppCompatActivity {
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(movieGerneListAdapter);
-
         populateMovieGerne();
     }
 

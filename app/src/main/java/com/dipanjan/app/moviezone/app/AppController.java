@@ -1,6 +1,8 @@
 package com.dipanjan.app.moviezone.app;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 
@@ -8,11 +10,14 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.dipanjan.app.moviezone.analytics.AnalyticsTrackers;
+import com.dipanjan.app.moviezone.util.Constant;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.StandardExceptionParser;
 import com.google.android.gms.analytics.Tracker;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 
 public class AppController extends Application {
@@ -24,7 +29,10 @@ public class AppController extends Application {
     private FirebaseAnalytics firebaseAnalytics;
 
     private static AppController mInstance;
+    private SharedPreferences sharedpreferences;
+    SharedPreferences.Editor editor;
 
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -35,6 +43,8 @@ public class AppController extends Application {
         firebaseAnalytics.setAnalyticsCollectionEnabled(true);
         firebaseAnalytics.setMinimumSessionDuration(10000);
         firebaseAnalytics.setSessionTimeoutDuration(500);
+        sharedpreferences = getSharedPreferences(Constant.MyPREFERENCES, Context.MODE_PRIVATE);
+        editor=sharedpreferences.edit();
     }
 
     public static synchronized AppController getInstance() {
@@ -137,5 +147,37 @@ public class AppController extends Application {
     }
 
 
+    public String getSharedPreferenceData(String preferenceTag){
+        String json = sharedpreferences.getString(preferenceTag, null);
+        return json;
+    }
 
+
+    public boolean storeSharedPreferenceData(String preferenceTag,String valueToBeStore){
+        try{
+            editor.putString(preferenceTag, valueToBeStore);
+            editor.commit();
+            return true;
+        }catch(Exception ex){
+            return false;
+        }
+    }
+
+
+    public FirebaseRemoteConfig getFirebaseRemoteConfigInstanse(){
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        mFirebaseRemoteConfig.setConfigSettings(
+                new FirebaseRemoteConfigSettings.Builder()/*.setDeveloperModeEnabled(BuildConfig.DEBUG)
+                        .setDeveloperModeEnabled(BuildConfig.DEBUG)*/
+                        .build());
+        return mFirebaseRemoteConfig;
+    }
+
+    public long getFirebasecacheExpirationDuration(FirebaseRemoteConfig mFirebaseRemoteConfig){
+        long cacheExpiration = 3600; // 1 hour in seconds.
+        if (mFirebaseRemoteConfig.getInfo( ).getConfigSettings( ).isDeveloperModeEnabled()) {
+            cacheExpiration = 0;
+        }
+        return cacheExpiration;
+    }
 }

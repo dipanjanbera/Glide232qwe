@@ -42,6 +42,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.google.gson.Gson;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -72,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
     private RelativeLayout relativeLayout,relativeLayoutForMessageText;
     private CoordinatorLayout coordinatorLayout;
     private TextView messageText;
-    private FirebaseRemoteConfig mFirebaseRemoteConfig;
     ArrayList<MovieSeries> movieSeries=null;
     public MainActivity() {
         dataModelArrayList = new ArrayList<DataModel>();
@@ -104,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
         startUpActivity();
 
 
@@ -128,26 +128,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if(isNetworkAvailable()){
-                    NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
-                        @Override
-                        public Integer processFinish(Integer URLIndexPos) {
-                            if(URLIndexPos!=-1){
-
-                                URLIndexPosition = URLIndexPos;
-                                relativeLayoutForMessageText.setVisibility(View.GONE);
-                                messageText.setVisibility(View.GONE);
-                                progressBar.setVisibility(View.VISIBLE);
-                                populateMovieData(URLIndexPos);
-                            }else{
-                                relativeLayout.setVisibility(View.GONE);
-                                relativeLayoutForMessageText.setVisibility(View.VISIBLE);
-                                messageText.setVisibility(View.VISIBLE);
-                                messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
-                                displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
-                            }
-                            return null;
-                        }
-                    }).execute();
+                    getFirebaseRemoteConfigJSONDataForHost();
                     snackBar.dismiss();
                     relativeLayout.setVisibility(View.VISIBLE);
                     progressBar.setVisibility(View.VISIBLE);
@@ -162,39 +143,78 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void startUpActivity() {
 
-    private void startUpActivity(){
-
-        if(isNetworkAvailable()){
-
-            NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
-                @Override
-                public Integer processFinish(Integer URLIndexPos) {
-                    if(URLIndexPos!=-1){
-                       // Toast.makeText(getApplicationContext(),URLIndexPos+"---"+Constant.BASE_URL[URLIndexPos],Toast.LENGTH_SHORT).show();
-                        URLIndexPosition=URLIndexPos;
-                        relativeLayoutForMessageText.setVisibility(View.GONE);
-                        messageText.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.VISIBLE);
-                        populateMovieData(URLIndexPos);
-                    }else{
-                        relativeLayout.setVisibility(View.GONE);
-                        relativeLayoutForMessageText.setVisibility(View.VISIBLE);
-                        messageText.setVisibility(View.VISIBLE);
-                        messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
-                        displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
-                    }
-                    return null;
-                }
-            }).execute();
-
-
-        }else {
+        if (isNetworkAvailable()) {
+            getFirebaseRemoteConfigJSONDataForHost();
+        } else {
             progressBar.setVisibility(View.GONE);
             displayNetworkInfoAlert(coordinatorLayout, Constant.MESSAGE_NETWORK_NOT_AVIALABLE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
         }
     }
 
+    public void getFirebaseRemoteConfigJSONDataForHost(){
+
+        final FirebaseRemoteConfig mfirFirebaseRemoteConfig = AppController.getInstance().getFirebaseRemoteConfigInstanse();
+        if(mfirFirebaseRemoteConfig!=null){
+            mfirFirebaseRemoteConfig.fetch(AppController.getInstance().getFirebasecacheExpirationDuration(mfirFirebaseRemoteConfig)).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if (task.isSuccessful()) {
+                        mfirFirebaseRemoteConfig.activateFetched();
+                        Log.d("Fetched Url", "Fetched value: " + mfirFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_HOST_LIST));
+
+                        MovieDetailsBO.getHostList(mfirFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_HOST_LIST), new com.dipanjan.app.moviezone.listener.DataFetchListener() {
+                            @Override
+                            public void onResultFetchedSuccessful(String[] hostArr) {
+                                List<String> strArr = Arrays.asList(hostArr);
+                                Gson gson = new Gson();
+                                String json = gson.toJson(strArr);
+                                AppController.getInstance().storeSharedPreferenceData(Constant.SharedPreferenceTag.HOST_LIST,json);
+                                performNetworkActivity(hostArr);
+                            }
+
+                            @Override
+                            public void onResultFetchError() {
+                                performNetworkActivity(Constant.BASE_URL);
+                            }
+                        });
+
+
+                    }
+
+                }
+            });
+        }else{
+            performNetworkActivity(Constant.BASE_URL);
+        }
+
+
+
+    }
+
+    public void performNetworkActivity(final String[] hostArr){
+        NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(hostArr,new NetworkCheck.AsyncResponse() {
+            @Override
+            public Integer processFinish(Integer URLIndexPos) {
+                if(URLIndexPos!=-1){
+                  //  Toast.makeText(getApplicationContext(),"come dddd "+hostArr[URLIndexPos],Toast.LENGTH_SHORT).show();
+                    URLIndexPosition = URLIndexPos;
+                    relativeLayoutForMessageText.setVisibility(View.GONE);
+                    messageText.setVisibility(View.GONE);
+                    progressBar.setVisibility(View.VISIBLE);
+                    populateMovieData(URLIndexPos,hostArr);
+                }else{
+                    relativeLayout.setVisibility(View.GONE);
+                    relativeLayoutForMessageText.setVisibility(View.VISIBLE);
+                    messageText.setVisibility(View.VISIBLE);
+                    messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
+                    displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
+                }
+                return null;
+            }
+        }).execute();
+    }
 
     @Override
     protected void onPostResume() {
@@ -230,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.search_movies) {
             if(URLIndexPosition!=-1){
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE);
                 openDialog();
                 return true;
             }
@@ -300,15 +321,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void populateMovieData(Integer URLIndexPos) {
+    private void populateMovieData(Integer URLIndexPos,String[] hostArr) {
         Log.d("CALL","Y");
-        initialisedListItems(URLIndexPos);
+        initialisedListItems(URLIndexPos,hostArr);
         for (DataModel dataModel : dataModelArrayList) {
             if (dataModel != null) {
                 fetchMovieData(dataModel);
             }
         }
-        getFirebaseRemoteConfigJSONDataForMovieSeries();
+        getFirebaseRemoteConfigJSONDataForMovieSeries(hostArr);
         populateMovieGerne(URLIndexPos);
 
     }
@@ -367,41 +388,37 @@ public class MainActivity extends AppCompatActivity {
         dataModelArrayList.add(0,dataModel);
     }
 
-    public void getFirebaseRemoteConfigJSONDataForMovieSeries(){
+    public void getFirebaseRemoteConfigJSONDataForMovieSeries(final String[] hostArr){
 
-        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        HashMap<String, Object> firebaseDefaultMap;
-        firebaseDefaultMap = new HashMap<>();
-        firebaseDefaultMap.put(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON, "");
-        mFirebaseRemoteConfig.setDefaults(firebaseDefaultMap);
-        mFirebaseRemoteConfig.setConfigSettings(
-                new FirebaseRemoteConfigSettings.Builder().setDeveloperModeEnabled(BuildConfig.DEBUG)
-                        .build());
-        mFirebaseRemoteConfig.fetch(0).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()) {
-                    mFirebaseRemoteConfig.activateFetched();
-                    Log.d("Fetched Url", "Fetched value: " + mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON));
+        final FirebaseRemoteConfig firebaseRemoteConfig = AppController.getInstance().getFirebaseRemoteConfigInstanse();
+        if(firebaseRemoteConfig!=null){
+            firebaseRemoteConfig.fetch(AppController.getInstance().getFirebasecacheExpirationDuration(firebaseRemoteConfig)).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if (task.isSuccessful()) {
+                        firebaseRemoteConfig.activateFetched();
+                        Log.d("Fetched Url", "Fetched value: " + firebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON));
 
-                    loadMovieSeriesContents(URLIndexPosition, new DataFetchListener() {
-                        @Override
-                        public void onDataFetchSuccessfull() {
-                            populateMovieSeries();
-                            makeCount();
-                        }
-                    });
+                        loadMovieSeriesContents(URLIndexPosition,hostArr, new DataFetchListener() {
+                            @Override
+                            public void onDataFetchSuccessfull() {
+                                Gson gson = new Gson();
+                                String json= gson.toJson(movieSeries);
+                                //AppController.getInstance().storeSharedPreferenceData(Constant.SharedPreferenceTag.MOVIE_SERIES_JSON,json);
+                                populateMovieSeries();
+                                makeCount();
+                            }
+                        },firebaseRemoteConfig);
 
-                }else
-                    Toast.makeText(MainActivity.this,"Someting went wrong please try again",Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+                    }else
+                        Toast.makeText(MainActivity.this,"Someting went wrong please try again",Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
-    private  void loadMovieSeriesContents(int URLIndexPosition,DataFetchListener dataFetchListener){
-        movieSeries = MovieDetailsBO.loadMovieSeriesContents(mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON),URLIndexPosition);
+    private  void loadMovieSeriesContents(int URLIndexPosition,String[] hostArr,DataFetchListener dataFetchListener,FirebaseRemoteConfig mFirebaseRemoteConfig){
+        movieSeries = MovieDetailsBO.loadMovieSeriesContents(mFirebaseRemoteConfig.getString(Constant.FIREBASE_REMOTE_CONFIG_MOVIE_JSON),URLIndexPosition,hostArr);
         if(movieSeries!=null && movieSeries.size()>0){
             dataFetchListener.onDataFetchSuccessfull();
         }
@@ -441,11 +458,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private ArrayList<DataModel> initialisedListItems(Integer URLIndexPos) {
+    private ArrayList<DataModel> initialisedListItems(Integer URLIndexPos,String[] hostArr) {
 
         for (int index = 0; index < Constant.IDENTIFIER_LIST.length; index++) {
             ArrayList<Movie> movieArr = new ArrayList<Movie>();
-            DataModel dataModel = new DataModel(Helper.generateURL(URLIndexPos,Constant.URL_LINK[index]), Constant.IDENTIFIER_LIST[index], Constant.IDENTIFIER_LIST[index], Constant.QUERY_PARAMETER[index], Helper.getFullHeaderName(Constant.HEADER_LIST[index]));
+            DataModel dataModel = new DataModel(Helper.generateURL(URLIndexPos,Constant.URL_LINK[index],hostArr), Constant.IDENTIFIER_LIST[index], Constant.IDENTIFIER_LIST[index], Constant.QUERY_PARAMETER[index], Helper.getFullHeaderName(Constant.HEADER_LIST[index]));
             SectionDataModel sectionDataModel = new SectionDataModel();
             sectionDataModel.setHeaderTitle(Helper.getFullHeaderName(Constant.HEADER_LIST[index]));
             sectionDataModel.setMovieIdentifier(Constant.IDENTIFIER_LIST[index]);
@@ -498,7 +515,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        strReq.setShouldCache(false);
+        if(dataModel.getSectionDataModel().getMovieIdentifier().equalsIgnoreCase(Constant.MovieCategory.LATEST_MOVIES)){
+            strReq.setShouldCache(false);
+        }
+
         AppController.getInstance().addToRequestQueue(strReq);
         return 1;
     }

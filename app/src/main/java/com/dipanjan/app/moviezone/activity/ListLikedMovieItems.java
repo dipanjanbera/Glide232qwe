@@ -27,8 +27,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.dipanjan.app.moviezone.adapter.GalleryAdapter;
+import com.dipanjan.app.moviezone.app.AppController;
 import com.dipanjan.app.moviezone.model.DataModel;
 import com.dipanjan.app.moviezone.model.Movie;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.dipanjan.app.moviezone.util.Constant;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 import com.google.gson.Gson;
@@ -243,10 +245,30 @@ public class ListLikedMovieItems extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.search_movies) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE);
             openDialog();
             return true;
         }
 
+        if (id == R.id.disclaimer) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER);
+            Intent intent = new Intent(getApplicationContext(),Disclaimer.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getApplicationContext().startActivity(intent);
+            return true;
+
+        }
+
+        if (id == R.id.rate) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_RATE_THE_APP, AnalyticsTAGs.Events.EVENT_RATE_THE_APP);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse(
+                    "https://play.google.com/store/apps/details?id=com.dipanjan.app.moviezone"));
+            startActivity(intent);
+            return true;
+
+        }
 
         return super.onOptionsItemSelected(item);
     }

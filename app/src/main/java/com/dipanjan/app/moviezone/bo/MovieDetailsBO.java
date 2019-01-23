@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import com.dipanjan.app.moviezone.helper.Helper;
+import com.dipanjan.app.moviezone.listener.DataFetchListener;
 import com.dipanjan.app.moviezone.model.Cast;
 import com.dipanjan.app.moviezone.model.Movie;
 import com.dipanjan.app.moviezone.model.MovieSeries;
@@ -193,7 +194,7 @@ public class MovieDetailsBO {
         return downloadReference;
     }
 
-    public static ArrayList<MovieSeries> loadMovieSeriesContents(String str,int URLIndexPosition) {
+    public static ArrayList<MovieSeries> loadMovieSeriesContents(String str,int URLIndexPosition,String[] hostArr) {
         ArrayList<MovieSeries> movieSeriesArrayList = new ArrayList<MovieSeries>();
         JSONObject jObj = null;
         try {
@@ -205,7 +206,7 @@ public class MovieDetailsBO {
                         MovieSeries movieSeries = new MovieSeries();
                         JSONObject obj = jArr.getJSONObject(i);
                         movieSeries.setMovieSeriesTitle(obj.getString("title"));
-                        movieSeries.setMoviePoster(Helper.generateURL(URLIndexPosition,Constant.IMAGE_PATH+obj.getString("poster")));
+                        movieSeries.setMoviePoster(Helper.generateURL(URLIndexPosition,Constant.IMAGE_PATH+obj.getString("poster"),hostArr));
                         ArrayList<String> codelist = movieSeries.getImdbCodes();
                         if (obj.has("codes")) {
                             JSONArray codeArr = obj.getJSONArray("codes");
@@ -234,15 +235,41 @@ public class MovieDetailsBO {
 
     }
 
-    public static ArrayList<String> generateURLForMovieSeries(Integer URLIndexPos, ArrayList<String> codeArr) {
+    public static ArrayList<String> generateURLForMovieSeries(Integer URLIndexPos, ArrayList<String> codeArr,String[] hostArr) {
         ArrayList<String> urlArr = new ArrayList<String>();
 
         for (String code : codeArr) {
-            urlArr.add(Helper.generateURL(URLIndexPos, Constant.StaticUrls.MOVIE_SHORT_DETAILS + code));
+            urlArr.add(Helper.generateURL(URLIndexPos, Constant.StaticUrls.MOVIE_SHORT_DETAILS + code,hostArr));
         }
         return urlArr;
 
     }
+
+    public static void getHostList(String jsonStr,DataFetchListener dataFetchListener){
+        ArrayList<String> hostArr  = new ArrayList<String>();
+        JSONObject jObj = null;
+        try {
+            jObj = new JSONObject(jsonStr);
+            if (jObj.has("hosts")) {
+                JSONArray jArr = jObj.getJSONArray("hosts");
+                if (jArr != null && jArr.length() > 0) {
+                    for (int i = 0; i < jArr.length(); i++) {
+                        hostArr.add(jArr.getString(i));
+                    }
+                }
+
+            }
+        }catch (JSONException json){
+            json.printStackTrace();
+            dataFetchListener.onResultFetchError();
+        }
+
+        Log.d("Fetched Url",""+hostArr.toArray());
+        dataFetchListener.onResultFetchedSuccessful(hostArr.toArray(new String[hostArr.size()]));
+        //return (String[]) hostArr.toArray();
+    }
+
+
 
 }
 

@@ -164,7 +164,6 @@ public class MovieDeatils extends AppCompatActivity {
             });
 
         }
-
         ThreeBounce threeBounce = new ThreeBounce();
         ThreeBounce threeBounceTransition = new ThreeBounce();
         progressBar.setIndeterminateDrawable(threeBounceTransition);
@@ -214,8 +213,8 @@ public class MovieDeatils extends AppCompatActivity {
 
 
        // Toast.makeText(getApplicationContext(),"come here "+URL_END_POINT+getMovieIDFromActivity(),Toast.LENGTH_SHORT).show();
-        fetchMovieDetails(Helper.generateURL(getURLIndexPosition(),URL_END_POINT)+getMovieIDFromActivity());
-        fetchSimilarMovieDetails(Helper.generateURL(getURLIndexPosition(),URL_END_POINT_FOR_SIMILAR_MOVIES)+getMovieIDFromActivity());
+        fetchMovieDetails(Helper.generateURL(getURLIndexPosition(),URL_END_POINT,getFirebaseRemoteConfigJSONDataForHost())+getMovieIDFromActivity());
+        fetchSimilarMovieDetails(Helper.generateURL(getURLIndexPosition(),URL_END_POINT_FOR_SIMILAR_MOVIES,getFirebaseRemoteConfigJSONDataForHost())+getMovieIDFromActivity());
 
         learn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -600,7 +599,7 @@ public class MovieDeatils extends AppCompatActivity {
                 //pDialog.hide();
             }
         });
-
+        strReq.setShouldCache(true);
         AppController.getInstance().addToRequestQueue(strReq);
     }
 
@@ -628,7 +627,7 @@ public class MovieDeatils extends AppCompatActivity {
                // pDialog.hide();
             }
         });
-
+        strReq.setShouldCache(true);
         AppController.getInstance().addToRequestQueue(strReq);
     }
 
@@ -723,6 +722,26 @@ public class MovieDeatils extends AppCompatActivity {
 
 
 
+    public String[] getFirebaseRemoteConfigJSONDataForHost() {
+        String[] hostList = null;
+        String json = AppController.getInstance().getSharedPreferenceData(Constant.SharedPreferenceTag.HOST_LIST);
+        if (json != null) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<List<String>>() {
+            }.getType();
+            List<String> strArr = gson.fromJson(json, type);
+            if (strArr != null && strArr.size() > 0) {
+                hostList = strArr.toArray(new String[strArr.size()]);
+
+
+            } else {
+                hostList = Constant.BASE_URL;
+
+
+            }
+        }
+        return hostList;
+    }
 
 
 }

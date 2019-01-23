@@ -1,6 +1,9 @@
 package com.dipanjan.app.moviezone.activity;
 
 import android.app.Activity;
+import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +11,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -17,7 +21,10 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -35,16 +42,21 @@ import com.dipanjan.app.moviezone.helper.NetworkCheck;
 import com.dipanjan.app.moviezone.helper.SortMovieSeries;
 import com.dipanjan.app.moviezone.model.Movie;
 import com.dipanjan.app.moviezone.model.MovieSeries;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.dipanjan.app.moviezone.util.Constant;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import info.dipanjan.app.R;
 
@@ -109,7 +121,6 @@ public class ListMovieSeriesItems extends AppCompatActivity
 
 
 
-
         startUpActivity();
 
 
@@ -119,26 +130,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
 
         if(isNetworkAvailable()){
 
-            NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
-                @Override
-                public Integer processFinish(Integer URLIndexPos) {
-                    if(URLIndexPos!=1){
-                        URLIndexPosition=URLIndexPos;
-                        relativeLayoutForMessageText.setVisibility(View.GONE);
-                        messageText.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.VISIBLE);
-                        fetchMovieDetails(movieSeries);
-
-                    }else{
-                        relativeLayout.setVisibility(View.GONE);
-                        relativeLayoutForMessageText.setVisibility(View.VISIBLE);
-                        messageText.setVisibility(View.VISIBLE);
-                        messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
-                        displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
-                    }
-                    return null;
-                }
-            }).execute();
+            getFirebaseRemoteConfigJSONDataForHost();
 
 
         }else {
@@ -147,7 +139,51 @@ public class ListMovieSeriesItems extends AppCompatActivity
         }
     }
 
+    private void performNetworkActivity(final String[] hostArr)
+    {
+        NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(hostArr,new NetworkCheck.AsyncResponse() {
+            @Override
+            public Integer processFinish(Integer URLIndexPos) {
+                if(URLIndexPos!=1){
+                    URLIndexPosition=URLIndexPos;
+                    relativeLayoutForMessageText.setVisibility(View.GONE);
+                    messageText.setVisibility(View.GONE);
+                    progressBar.setVisibility(View.VISIBLE);
+                    fetchMovieDetails(movieSeries,hostArr);
 
+                }else{
+                    relativeLayout.setVisibility(View.GONE);
+                    relativeLayoutForMessageText.setVisibility(View.VISIBLE);
+                    messageText.setVisibility(View.VISIBLE);
+                    messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
+                    displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
+                }
+                return null;
+            }
+        }).execute();
+    }
+
+    public void getFirebaseRemoteConfigJSONDataForHost(){
+
+        String json=AppController.getInstance().getSharedPreferenceData(Constant.SharedPreferenceTag.HOST_LIST);
+        if(json!=null){
+            Gson gson=new Gson();
+            Type type = new TypeToken<List<String>>(){}.getType();
+            List<String> strArr = gson.fromJson(json, type);
+            if(strArr!=null && strArr.size()>0){
+               // this.hostList=strArr.toArray(new String[strArr.size()]);
+                performNetworkActivity(strArr.toArray(new String[strArr.size()]));
+
+            }else{
+               // this.hostList=Constant.BASE_URL;
+                performNetworkActivity(Constant.BASE_URL);
+            }
+        }else{
+            //this.hostList=Constant.BASE_URL;
+            performNetworkActivity(Constant.BASE_URL);
+        }
+
+    }
 
     public void displayNetworkInfoAlert(final CoordinatorLayout coordinatorLayout, String msg,int displayMode){
         final Snackbar snackBar = Snackbar.make(coordinatorLayout,msg , Snackbar.LENGTH_INDEFINITE);
@@ -166,25 +202,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 if(isNetworkAvailable()){
-                    NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
-                        @Override
-                        public Integer processFinish(Integer URLIndexPos) {
-                            if(URLIndexPos!=-1){
-                                URLIndexPosition=URLIndexPos;
-                                relativeLayoutForMessageText.setVisibility(View.GONE);
-                                messageText.setVisibility(View.GONE);
-                                progressBar.setVisibility(View.VISIBLE);
-                                fetchMovieDetails(movieSeries);
-                            }else{
-                                relativeLayout.setVisibility(View.GONE);
-                                relativeLayoutForMessageText.setVisibility(View.VISIBLE);
-                                messageText.setVisibility(View.VISIBLE);
-                                messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
-                                displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);
-                            }
-                            return null;
-                        }
-                    }).execute();
+                    getFirebaseRemoteConfigJSONDataForHost();
                     snackBar.dismiss();
                     relativeLayout.setVisibility(View.VISIBLE);
                     progressBar.setVisibility(View.VISIBLE);
@@ -211,8 +229,8 @@ public class ListMovieSeriesItems extends AppCompatActivity
     }
 
 
-    public void fetchMovieDetails(MovieSeries movieSeries){
-       ArrayList<String> urlArr= MovieDetailsBO.generateURLForMovieSeries(URLIndexPosition,movieSeries.getImdbCodes());
+    public void fetchMovieDetails(MovieSeries movieSeries,String[] hostArr){
+       ArrayList<String> urlArr= MovieDetailsBO.generateURLForMovieSeries(URLIndexPosition,movieSeries.getImdbCodes(),hostArr);
 
        for(String url:urlArr){
            callWebServiceTofetchDetails(url);
@@ -245,7 +263,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
 
 
         // Adding request to request queue
-        strReq.setShouldCache(false);
+        strReq.setShouldCache(true);
         AppController.getInstance().addToRequestQueue(strReq);
     }
 
@@ -286,7 +304,7 @@ public class ListMovieSeriesItems extends AppCompatActivity
                 SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
                 newFragment.setArguments(bundle);
                 newFragment.show(ft, "slideshow");*/
-
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MOVIE_FROM_SERIES, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE);
                 Intent intent = new Intent(getApplicationContext(),MovieDeatils.class);
                 intent.putExtra("MOVIEID", movies.get(position).getId());
                 intent.putExtra("URLIndexPosition", URLIndexPosition);
@@ -375,6 +393,78 @@ public class ListMovieSeriesItems extends AppCompatActivity
         }
 
 
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.fav) {
+            if(URLIndexPosition!=-1){
+                Intent intent = new Intent(getApplicationContext(),ListLikedMovieItems.class);
+                Log.d("@@@@@@@@ ",""+URLIndexPosition);
+                intent.putExtra("URLIndexPosition", URLIndexPosition);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getApplicationContext().startActivity(intent);
+                return true;
+            }
+
+        }
+        if (id == R.id.search_movies) {
+            if(URLIndexPosition!=-1){
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE);
+                openDialog();
+                return true;
+            }
+
+        }
+
+        if (id == R.id.disclaimer) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER);
+            Intent intent = new Intent(getApplicationContext(),Disclaimer.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getApplicationContext().startActivity(intent);
+            return true;
+
+        }
+
+        if (id == R.id.rate) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_RATE_THE_APP, AnalyticsTAGs.Events.EVENT_RATE_THE_APP);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse(
+                    "https://play.google.com/store/apps/details?id=com.dipanjan.app.moviezone"));
+            startActivity(intent);
+            return true;
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    DialogFragment dialogFragment;
+
+    private void openDialog() {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        Fragment prev = getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+        dialogFragment = new SearchDialogFragment();
+        dialogFragment.show(ft, "dialog");
     }
 }
 

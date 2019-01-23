@@ -10,7 +10,9 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -27,27 +29,40 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.dipanjan.app.moviezone.adapter.GalleryAdapter;
+import com.dipanjan.app.moviezone.bo.MovieDetailsBO;
 import com.dipanjan.app.moviezone.helper.NetworkCheck;
 import com.dipanjan.app.moviezone.model.Movie;
+import com.dipanjan.app.moviezone.util.AnalyticsTAGs;
 import com.github.ybq.android.spinkit.style.ThreeBounce;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import info.dipanjan.app.BuildConfig;
 import info.dipanjan.app.R;
 
 import com.dipanjan.app.moviezone.app.AppController;
 import com.dipanjan.app.moviezone.helper.Helper;
 import com.dipanjan.app.moviezone.util.Constant;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 public class ListMovieItem extends AppCompatActivity {
@@ -67,6 +82,7 @@ public class ListMovieItem extends AppCompatActivity {
     int movieCount=0;
     private TextView messageText;
     private Integer URLIndexPosition;
+    private String[] hostList;
 
 
 
@@ -139,7 +155,7 @@ public class ListMovieItem extends AppCompatActivity {
 
 
 
-                    fetchImages(Helper.generateURL(URLIndexPosition,endpoint) + pageCount, new ListFetchListerner() {
+                    fetchImages(Helper.generateURL(URLIndexPosition,endpoint,hostList) + pageCount, new ListFetchListerner() {
                         @Override
                         public void onSuccessFullFetch() {
                             snackBar.dismiss();
@@ -164,7 +180,7 @@ public class ListMovieItem extends AppCompatActivity {
                 SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
                 newFragment.setArguments(bundle);
                 newFragment.show(ft, "slideshow");*/
-
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MOVIE_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_MOVIE);
                 Intent intent = new Intent(getApplicationContext(),MovieDeatils.class);
                 intent.putExtra("MOVIEID", movies.get(position).getId());
                 intent.putExtra("URLIndexPosition", URLIndexPosition);
@@ -179,7 +195,6 @@ public class ListMovieItem extends AppCompatActivity {
 
             }
         }));
-
 
         startUpActivity();
 
@@ -233,7 +248,7 @@ public class ListMovieItem extends AppCompatActivity {
 
 
         // Adding request to request queue
-        strReq.setShouldCache(false);
+        strReq.setShouldCache(true);
         AppController.getInstance().addToRequestQueue(strReq);
     }
 
@@ -254,7 +269,7 @@ public class ListMovieItem extends AppCompatActivity {
         snackBar.setAction("Try Again", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                retryNetworkConnection();
+                getFirebaseRemoteConfigJSONDataForHost();
                 snackBar.dismiss();
             }
         });
@@ -262,9 +277,9 @@ public class ListMovieItem extends AppCompatActivity {
         snackBar.show();
     }
 
-    private void retryNetworkConnection(){
+    private void retryNetworkConnection(final String[] hostArr){
         if(isNetworkAvailable()){
-            NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
+            NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(hostArr,new NetworkCheck.AsyncResponse() {
                 @Override
                 public Integer processFinish(Integer URLIndexPos) {
                     if(URLIndexPos!=-1){
@@ -272,7 +287,7 @@ public class ListMovieItem extends AppCompatActivity {
                         relativeLayoutForMessageText.setVisibility(View.GONE);
                         messageText.setVisibility(View.GONE);
                         progressBar.setVisibility(View.VISIBLE);
-                        fetchImages(Helper.generateURL(URLIndexPos,endpoint) + pageCount, new ListFetchListerner() {
+                        fetchImages(Helper.generateURL(URLIndexPos,endpoint,hostArr) + pageCount, new ListFetchListerner() {
                             @Override
                             public void onSuccessFullFetch() {
                                 //  Toast.makeText(getApplicationContext(),"come dddd "+movieCount,Toast.LENGTH_SHORT).show();
@@ -319,43 +334,7 @@ public class ListMovieItem extends AppCompatActivity {
 
         if(isNetworkAvailable()){
 
-            NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(new NetworkCheck.AsyncResponse() {
-                @Override
-                public Integer processFinish(Integer URLIndexPos) {
-                    if(URLIndexPos!=1){
-                        URLIndexPosition=URLIndexPos;
-                        relativeLayoutForMessageText.setVisibility(View.GONE);
-                        messageText.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.VISIBLE);
-                        fetchImages(Helper.generateURL(URLIndexPos,endpoint) + pageCount, new ListFetchListerner() {
-                            @Override
-                            public void onSuccessFullFetch() {
-                                //  Toast.makeText(getApplicationContext(),"come dddd "+movieCount,Toast.LENGTH_SHORT).show();
-                                if(getIntent().getStringExtra("SEARCH")!=null){
-                                    if(movieCount>1){
-                                        getSupportActionBar().setTitle(movieCount+" Movies found");
-                                    }else{
-                                        getSupportActionBar().setTitle(movieCount+" Movie found");
-                                    }
-
-                                }
-                            }
-                        });
-
-                    }else{
-                        if(retryConnectionCount==0){
-                            retryNetworkConnection();
-                            retryConnectionCount++;
-                        }
-                        /*relativeLayout.setVisibility(View.GONE);
-                        relativeLayoutForMessageText.setVisibility(View.VISIBLE);
-                        messageText.setVisibility(View.VISIBLE);
-                        messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
-                        displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);*/
-                    }
-                    return null;
-                }
-            }).execute();
+            getFirebaseRemoteConfigJSONDataForHost();
 
 
         }else {
@@ -365,7 +344,70 @@ public class ListMovieItem extends AppCompatActivity {
     }
 
 
+    public void getFirebaseRemoteConfigJSONDataForHost(){
 
+        String json=AppController.getInstance().getSharedPreferenceData(Constant.SharedPreferenceTag.HOST_LIST);
+        if(json!=null){
+            Gson gson=new Gson();
+            Type type = new TypeToken<List<String>>(){}.getType();
+            List<String> strArr = gson.fromJson(json, type);
+            if(strArr!=null && strArr.size()>0){
+                this.hostList=strArr.toArray(new String[strArr.size()]);
+                performNetworkActivity(strArr.toArray(new String[strArr.size()]));
+
+            }else{
+                this.hostList=Constant.BASE_URL;
+                performNetworkActivity(Constant.BASE_URL);
+            }
+        }else{
+            this.hostList=Constant.BASE_URL;
+            performNetworkActivity(Constant.BASE_URL);
+        }
+
+    }
+
+
+    private void performNetworkActivity(final String[] hostArr){
+        NetworkCheck networkCheck = (NetworkCheck) new NetworkCheck(hostArr,new NetworkCheck.AsyncResponse() {
+            @Override
+            public Integer processFinish(Integer URLIndexPos) {
+                if(URLIndexPos!=1){
+                    URLIndexPosition=URLIndexPos;
+                    //Toast.makeText(getApplicationContext(),"come dddd "+hostArr[URLIndexPosition],Toast.LENGTH_SHORT).show();
+                    relativeLayoutForMessageText.setVisibility(View.GONE);
+                    messageText.setVisibility(View.GONE);
+                    progressBar.setVisibility(View.VISIBLE);
+
+                    fetchImages(Helper.generateURL(URLIndexPos,endpoint,hostArr) + pageCount, new ListFetchListerner() {
+                        @Override
+                        public void onSuccessFullFetch() {
+                            //  Toast.makeText(getApplicationContext(),"come dddd "+movieCount,Toast.LENGTH_SHORT).show();
+                            if(getIntent().getStringExtra("SEARCH")!=null){
+                                if(movieCount>1){
+                                    getSupportActionBar().setTitle(movieCount+" Movies found");
+                                }else{
+                                    getSupportActionBar().setTitle(movieCount+" Movie found");
+                                }
+
+                            }
+                        }
+                    });
+
+                }else{
+                    if(retryConnectionCount==0){
+                        retryNetworkConnection(hostArr);
+                        retryConnectionCount++;
+                    }
+                        /*relativeLayout.setVisibility(View.GONE);
+                        relativeLayoutForMessageText.setVisibility(View.VISIBLE);
+                        messageText.setVisibility(View.VISIBLE);
+                        messageText.setText(NetworkCheck.DISPLAY_MSG_IF_HOST_NOT_RESOLVE);
+                        displayNetworkInfoAlert(coordinatorLayout, NetworkCheck.DISPLAY_SNACBAR_MSG_IF_HOST_NOT_RESOLVE, Constant.SNACKBAR_DISPALY_MODE_FAILURE);*/
+                }
+                return null;
+            }
+        }).execute();
+    }
 
     public void populateMovieObject (String stg, ArrayList<Movie> movies, ListFetchListerner listFetchListerner) {
         // Toast.makeText(this.getApplicationContext(),"come here ",Toast.LENGTH_SHORT).show();
@@ -476,9 +518,30 @@ public class ListMovieItem extends AppCompatActivity {
         }
         if (id == R.id.search_movies) {
             if(URLIndexPosition!=-1){
+                AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE, AnalyticsTAGs.Events.EVENT_OPEN_SEARCH_MOVIE);
                 openDialog();
                 return true;
             }
+
+        }
+
+        if (id == R.id.disclaimer) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER, AnalyticsTAGs.Events.EVENT_OPEN_DISCLAIMER);
+            Intent intent = new Intent(getApplicationContext(),Disclaimer.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getApplicationContext().startActivity(intent);
+            return true;
+
+        }
+
+        if (id == R.id.rate) {
+            AppController.getInstance().trackEvent(AnalyticsTAGs.Category.CATEGORY_MENU_CLICK, AnalyticsTAGs.Events.EVENT_RATE_THE_APP, AnalyticsTAGs.Events.EVENT_RATE_THE_APP);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setData(Uri.parse(
+                    "https://play.google.com/store/apps/details?id=com.dipanjan.app.moviezone"));
+            startActivity(intent);
+            return true;
 
         }
 

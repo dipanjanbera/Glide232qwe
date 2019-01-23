@@ -10,6 +10,11 @@ public interface AnalyticsTAGs {
         String CATEGORY_BUTTON_CLICK="Button Click";
         String CATEGORY_SNACKBAR_CLICK="Snackbar Click";
         String CATEGORY_MENU_CLICK="Menu Click";
+        String CATEGORY_MOVIE_CLICK="Open Movie";
+        String CATEGORY_MOVIE_SERIES__CLICK="Open Movie Series";
+        String CATEGORY_MOVIE_SERIES_NAME="Open Movie Series Named AS";
+        String CATEGORY_MOVIE_FROM_SERIES="Open Movie From Series";
+        String CATEGORY_SEARCH_MOVIE="Search Movie";
         String CATEGORY_MOVIE_ITEM_CLICK="MOVIE CLICK";
         String CATEGORY_MOVIE_LIKE_CLICK="LIKE MOVIE";
         String CATEGORY_DISLIKE_MOVIE_CLICK="DISLIKE MOVIE";
@@ -29,5 +34,9 @@ public interface AnalyticsTAGs {
         String EVENT_DOWNLOAD_TORRENT_CLIENT_CLICK = "Download Torrent Client ";
         String EVENT_RATE_THE_APP = "Rate App";
         String EVENT_OPEN_DISCLAIMER = "Open Disclaimer";
+        String EVENT_OPEN_MOVIE = "Open Movie";
+        String EVENT_OPEN_MOVIE_SERIES = "Open Movie Series";
+        String EVENT_OPEN_SEARCH_MOVIE = "Search Movie";
+
     }
 }
